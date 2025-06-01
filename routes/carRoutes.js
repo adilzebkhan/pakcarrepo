@@ -1,27 +1,15 @@
 import express from "express";
-import multer from "multer";
 import Car from "../models/Car.js";
 import path from "path";
 import auth from "../middleware/auth.js";
-
 import mongoose from "mongoose";
+
+// ✅ Import Cloudinary-based upload middleware
+import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
-// Multer config
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename(req, file, cb) {
-    const uniqueSuffix = Date.now() + path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + uniqueSuffix);
-  },
-});
-
-const upload = multer({ storage });
-
-// Add this route for debugging
+// Raw debug route
 router.get("/raw", async (req, res) => {
   try {
     const rawCars = await mongoose.connection.db
@@ -35,12 +23,11 @@ router.get("/raw", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-// debug route ends here
+
 // GET all cars
 router.get("/", async (req, res) => {
   try {
     const cars = await Car.find();
-    console.log("Fetched cars:", cars); // Add this line to see in console what is wrong why you car rout does not show cars you have added in you mongodb atlas
     res.json(cars);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -71,11 +58,12 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// POST new car with image upload
+// ✅ POST new car with image upload to Cloudinary
 router.post("/", upload.single("image"), async (req, res) => {
   try {
     const { brand, model, variant, price, features, popular } = req.body;
-    const imagePath = `/uploads/${req.file.filename}`;
+
+    const imageUrl = req.file?.path; // Cloudinary URL
     const featureArray = features.split(",").map((f) => f.trim());
 
     const newCar = new Car({
@@ -84,8 +72,8 @@ router.post("/", upload.single("image"), async (req, res) => {
       variant,
       price,
       features: featureArray,
-      image: imagePath,
-      popular: popular === "true" || popular === true, // Handle string from form
+      image: imageUrl,
+      popular: popular === "true" || popular === true,
     });
 
     const savedCar = await newCar.save();

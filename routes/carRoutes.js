@@ -1,85 +1,95 @@
+// backend/routes/carRoutes.js
 import express from "express";
-import Car from "../models/Car.js";
-import path from "path";
-import auth from "../middleware/auth.js";
 import mongoose from "mongoose";
 
-// ✅ Import Cloudinary-based upload middleware
-import upload from "../middleware/upload.js";
+import Car from "../models/Car.js";
+import auth from "../middleware/auth.js";
+
+// ⬇️ Cloudinary-based multer storage
+import upload from "../middleware/cloudinaryUpload.js"; // <— be sure file exists
 
 const router = express.Router();
 
-// Raw debug route
-router.get("/raw", async (req, res) => {
+/* ───────────── Debug: raw query ───────────── */
+router.get("/raw", async (_req, res) => {
   try {
     const rawCars = await mongoose.connection.db
       .collection("cars")
       .find({})
       .toArray();
-    console.log("Raw cars from DB:", rawCars);
-    res.json(rawCars);
+    return res.json(rawCars);
   } catch (err) {
-    console.error("Raw fetch error:", err.message);
-    res.status(500).json({ message: err.message });
+    console.error("Raw fetch error:", err);
+    return res.status(500).json({ message: err.message });
   }
 });
 
-// GET all cars
-router.get("/", async (req, res) => {
+/* ───────────── Public GET routes ───────────── */
+router.get("/", async (_req, res) => {
   try {
     const cars = await Car.find();
-    res.json(cars);
+    return res.json(cars);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 });
 
-// GET single car by ID
 router.get("/:id", async (req, res) => {
   try {
     const car = await Car.findById(req.params.id);
-    if (car) {
-      res.json(car);
-    } else {
-      res.status(404).json({ message: "Car not found" });
-    }
+    return car
+      ? res.json(car)
+      : res.status(404).json({ message: "Car not found" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 });
 
-// DELETE car by ID
-router.delete("/:id", async (req, res) => {
+/* ───────────── Delete (optionally protect with auth) ───────────── */
+router.delete("/:id", auth, async (req, res) => {
   try {
     const deletedCar = await Car.findByIdAndDelete(req.params.id);
-    res.json({ message: "Car deleted", deletedCar });
+    return res.json({ message: "Car deleted", deletedCar });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 });
 
-// ✅ POST new car with image upload to Cloudinary
-router.post("/", upload.single("image"), async (req, res) => {
+/* ───────────── Create – image goes to Cloudinary ───────────── */
+router.post("/", auth, upload.single("image"), async (req, res) => {
   try {
     const { brand, model, variant, price, features, popular } = req.body;
 
-    const imageUrl = req.file?.path; // Cloudinary URL
-    const featureArray = features.split(",").map((f) => f.trim());
+    // Cloudinary URL from multer-storage-cloudinary
+    const imageUrl = req.file?.path;
+
+    // Accept features as JSON array OR comma-separated list
+    let featureArray = [];
+    if (Array.isArray(features)) {
+      featureArray = features;
+    } else if (features?.startsWith("[")) {
+      featureArray = JSON.parse(features);
+    } else if (typeof features === "string") {
+      featureArray = features.split(",").map((f) => f.trim());
+    }
 
     const newCar = new Car({
       brand,
       model,
       variant,
-      price,
+      price: Number(price),
       features: featureArray,
       image: imageUrl,
       popular: popular === "true" || popular === true,
     });
 
     const savedCar = await newCar.save();
-    res.status(201).json(savedCar);
+    return res.status(201).json(savedCar);
   } catch (err) {
-    res.status(500).json({ message: "Failed to add car", error: err.message });
+    console.error("Failed to add car:", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to add car", error: err.message });
   }
 });
 

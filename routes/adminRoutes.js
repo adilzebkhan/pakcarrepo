@@ -15,7 +15,7 @@ router.get("/dashboard", auth, (req, res) => {
 router.get("/seed", async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash("admin123", 10);
-
+    console.log(hashedPassword);
     const admin = await Admin.findOneAndUpdate(
       { username: "admin" },
       { password: hashedPassword },
@@ -43,20 +43,27 @@ router.post("/login", async (req, res) => {
 
     const admin = await Admin.findOne({ username });
     if (!admin) {
-      console.log("Admin not found");
+      console.log("Admin not found in DB");
       return res.status(401).json({ message: "Invalid username or password" });
     }
-
+    console.log("🟢 Fetched from DB:", {
+      username: admin.username,
+      passwordHash: admin.password, // Hashed password from DB
+    });
     const isMatch = await bcrypt.compare(password, admin.password);
     console.log("Password match:", isMatch);
 
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid username or password" });
+      console.log("Password not matched");
+      return res.status(401).json({
+        message: "Invalid username or password or password not matched",
+      });
     }
 
     const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
       expiresIn: "2h",
     });
+    console.log("✅ Login success, sending token.");
 
     return res.json({ token });
   } catch (err) {

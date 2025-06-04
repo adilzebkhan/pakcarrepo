@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
 import mongoose from "mongoose";
 import carRoutes from "./routes/carRoutes.js";
 import cors from "cors";
@@ -8,8 +9,6 @@ import adminRoutes from "./routes/adminRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
-
-dotenv.config();
 
 const app = express();
 app.use("/api/auth", authRoutes);

@@ -58,6 +58,7 @@ router.delete("/:id", auth, async (req, res) => {
 /* ───────────── Create – image goes to Cloudinary ───────────── */
 router.post("/", auth, upload.single("image"), async (req, res) => {
   try {
+    console.log("File middleware (POST):", req.file);
     const { brand, model, variant, price, features, popular } = req.body;
 
     const imageUrl = req.file?.path;

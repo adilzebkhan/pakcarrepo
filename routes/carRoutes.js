@@ -6,7 +6,7 @@ import Car from "../models/Car.js";
 import auth from "../middleware/auth.js";
 
 // ⬇️ Cloudinary-based multer storage
-import upload from "../middleware/cloudinaryUpload.js"; // <— be sure file exists
+import upload from "../middleware/cloudinaryUpload.js";
 
 const router = express.Router();
 
@@ -60,10 +60,8 @@ router.post("/", auth, upload.single("image"), async (req, res) => {
   try {
     const { brand, model, variant, price, features, popular } = req.body;
 
-    // Cloudinary URL from multer-storage-cloudinary
     const imageUrl = req.file?.path;
 
-    // Accept features as JSON array OR comma-separated list
     let featureArray = [];
     if (Array.isArray(features)) {
       featureArray = features;
@@ -90,6 +88,52 @@ router.post("/", auth, upload.single("image"), async (req, res) => {
     return res
       .status(500)
       .json({ message: "Failed to add car", error: err.message });
+  }
+});
+
+/* ───────────── Update – image goes to Cloudinary ───────────── */
+router.put("/:id", auth, upload.single("image"), async (req, res) => {
+  try {
+    const { brand, model, variant, price, features, popular } = req.body;
+
+    let featureArray = [];
+    if (Array.isArray(features)) {
+      featureArray = features;
+    } else if (features?.startsWith("[")) {
+      featureArray = JSON.parse(features);
+    } else if (typeof features === "string") {
+      featureArray = features.split(",").map((f) => f.trim());
+    }
+
+    const updateFields = {
+      brand,
+      model,
+      variant,
+      price: Number(price),
+      features: featureArray,
+      popular: popular === "true" || popular === true,
+    };
+
+    if (req.file?.path) {
+      updateFields.image = req.file.path;
+    }
+
+    const updatedCar = await Car.findByIdAndUpdate(
+      req.params.id,
+      updateFields,
+      { new: true }
+    );
+
+    if (!updatedCar) {
+      return res.status(404).json({ message: "Car not found" });
+    }
+
+    res.json(updatedCar);
+  } catch (err) {
+    console.error("Failed to update car:", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to update car", error: err.message });
   }
 });
 

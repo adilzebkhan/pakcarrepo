@@ -18,7 +18,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Middleware to parse JSON
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://pakcarprices.vercel.app"], // Replace with your actual deployed frontend domain
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use("/api/admin", adminRoutes);

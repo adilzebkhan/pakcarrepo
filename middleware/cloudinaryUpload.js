@@ -7,7 +7,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: "pakcar", // name of folder in Cloudinary
-    allowedformats: ["jpg", "jpeg", "png"],
+    allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
 

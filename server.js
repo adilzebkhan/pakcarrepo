@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import mongoose from "mongoose";
 import carRoutes from "./routes/carRoutes.js";
+import brandRoutes from "./routes/brandRoutes.js";
 import cors from "cors";
 import authRoutes from "./middleware/auth.js";
 import adminRoutes from "./routes/adminRoutes.js";
@@ -11,16 +12,18 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const app = express();
-app.use("/api/auth", authRoutes);
-app.use(cors());
+
 // Setup __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Middleware to parse JSON
+app.use(cors());
 app.use(express.json());
 
 app.use("/api/admin", adminRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/brands", brandRoutes);
 
 // Serve static images from the /images folder
 // app.use("/images", express.static(path.join(__dirname, "images")));

@@ -20,7 +20,10 @@ const __dirname = path.dirname(__filename);
 // Middleware to parse JSON
 app.use(
   cors({
-    origin: ["https://pakcarprices.vercel.app"], // Replace with your actual deployed frontend domain
+    origin: [
+      "https://pakcarprices.vercel.app", // Deployed frontend
+      "http://localhost:5173", // Local frontend
+    ],
     credentials: true,
   })
 );

@@ -32,4 +32,13 @@ router.post("/", upload.single("brandLogo"), async (req, res) => {
   }
 });
 
+router.delete("/:id", async (req, res) => {
+  try {
+    const deletedBrand = await Brand.findByIdAndDelete(req.params.id);
+    return res.json({ message: "Brand deleted", deletedBrand });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
 export default router;

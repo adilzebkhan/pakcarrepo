@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 
 const brandSchema = new mongoose.Schema({
-  name: {
+  brandName: {
     type: String,
     required: true,
     unique: true,
     trim: true,
   },
-  logo: {
+  brandLogo: {
     type: String, // URL or Cloudinary image path
     required: false,
   },
